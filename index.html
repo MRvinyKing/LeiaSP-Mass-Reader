@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leitura Automática (Frontend)</title>
+    <!-- Simple Icons (replace with FontAwesome or SVG if preferred) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="main-header">
+            <h1>Leitura Automática (Frontend)</h1>
+            <div class="header-controls">
+                <button id="settingsBtn" title="Configurações Avançadas"><i class="fas fa-cog"></i></button>
+                <button id="darkModeToggleBtn" title="Alternar Modo Claro/Escuro"><i class="fas fa-adjust"></i></button>
+            </div>
+        </header>
+
+        <!-- Moved API config inside settings dialog -->
+
+        <section class="config-section">
+            <details open>
+                <summary>Configurações (Obrigatório)</summary>
+                <div class="config-grid">
+                    <fieldset>
+                        <legend>Modo de Seleção de Livro</legend>
+                        <div class="radio-group">
+                             <label><input type="radio" name="bookMode" value="recomendados" checked> Recomendados</label>
+                             <label><input type="radio" name="bookMode" value="indicados"> Indicados</label>
+                             <label><input type="radio" name="bookMode" value="pesquisa"> Pesquisa</label>
+                             <label><input type="radio" name="bookMode" value="slug"> Slug Direto</label>
+                        </div>
+                        <div id="searchTermDiv" class="conditional-input" style="display: none;">
+                            <label for="searchTerm">Termo de Pesquisa:</label>
+                            <input type="text" id="searchTerm" name="searchTerm">
+                        </div>
+                        <div id="slugDiv" class="conditional-input" style="display: none;">
+                            <label for="bookSlug">Slug do Livro:</label>
+                            <input type="text" id="bookSlug" name="bookSlug">
+                        </div>
+                    </fieldset>
+
+                    <fieldset>
+                        <legend>Parâmetros de Leitura</legend>
+                        <div class="param-group">
+                            <label for="minTime">Tempo Mín (min):</label>
+                            <input type="number" id="minTime" name="minTime" value="15" min="1">
+                            <label for="maxTime">Tempo Máx (min):</label>
+                            <input type="number" id="maxTime" name="maxTime" value="45" min="1">
+                        </div>
+                        <div class="param-group">
+                            <label for="minPercent">Leitura Mín (%):</label>
+                            <input type="number" id="minPercent" name="minPercent" value="80" min="0" max="100">
+                            <label for="maxPercent">Leitura Máx (%):</label>
+                            <input type="number" id="maxPercent" name="maxPercent" value="100" min="0" max="100">
+                        </div>
+                        <div class="param-group">
+                             <label for="minQuestions">Questões Mín:</label>
+                             <input type="number" id="minQuestions" name="minQuestions" value="3" min="0">
+                             <label for="maxQuestions">Questões Máx:</label>
+                             <input type="number" id="maxQuestions" name="maxQuestions" value="5" min="0">
+                        </div>
+                        <label for="timeCorrelationFactor">Fator Correlação Tempo (%):</label>
+                        <input type="number" id="timeCorrelationFactor" name="timeCorrelationFactor" value="30" min="0" max="100" step="5">
+                    </fieldset>
+                </div>
+
+                <!-- Combo List moved here -->
+                <details class="combo-details">
+                     <summary>Lista de Contas (login:senha por linha)</summary>
+                     <textarea id="comboList" rows="10" placeholder="Cole ou digite sua lista aqui... (formato: RA:SENHA por linha)"></textarea>
+                </details>
+            </details>
+        </section>
+
+        <!-- Removed combo-section from here -->
+
+        <section class="actions">
+            <button id="startTasksBtn" disabled>Iniciar Tarefas</button>
+            <button id="stopTasksBtn" style="display: none; background-color: #d9534f;">Parar Monitoramento</button>
+            <span id="validationError" class="error-message"></span>
+        </section>
+
+        <section class="progress-section">
+            <h2>Progresso das Tarefas</h2>
+            <div id="progressSpinner" class="spinner" style="display: none;"></div>
+             <div class="progress-summary">
+                 <span id="total-tasks">Total: 0</span> |
+                 <span id="pending-tasks">Pendentes: 0</span> |
+                 <span id="running-tasks">Executando: 0</span> |
+                 <span id="completed-tasks">Concluídas: 0</span> |
+                 <span id="error-tasks">Erros: 0</span>
+             </div>
+            <table id="progressTable">
+                <thead>
+                    <tr>
+                        <th>Status</th> <!-- Icon column -->
+                        <!--<th>ID Tarefa</th>  REMOVED -->
+                        <th>RA</th>
+                        <th>Livro</th>
+                        <th>Progresso / Mensagem</th>
+                    </tr>
+                </thead>
+                <tbody id="progressBody">
+                    <!-- Example Row Structure (will be generated by JS) -->
+                    <!--
+                    <tr class="task-row" data-task-id="TASK123" data-ra="123456" data-password="password123" data-book-target="Nome do Livro X" data-time-target="15-45 min" data-questions-target="3-5 Q">
+                        <td class="status-cell" title="Pendente"><i class="fas fa-hourglass-start status-icon status-pendente"></i></td>
+                        <td>123456</td>
+                        <td>(Aguardando)</td>
+                        <td>Pronto para iniciar</td>
+                    </tr>
+                    <tr class="detail-row" style="display: none;">
+                        <td colspan="4"> // Adjusted colspan
+                            <div class="detail-content">
+                                // ... updated content below ...
+                            </div>
+                        </td>
+                    </tr>
+                    -->
+                     <tr><td colspan="4">Nenhuma tarefa iniciada.</td></tr> <!-- Adjusted colspan -->
+                </tbody>
+            </table>
+             <button id="downloadResultsBtn" style="margin-top: 15px; display:none;">Baixar Resultados</button>
+        </section>
+
+         <!-- Log Area for detailed messages -->
+         <section class="log-section">
+              <details>
+                   <summary>Log Detalhado</summary>
+                   <pre id="logOutput"></pre>
+              </details>
+         </section>
+
+    </div> <!-- end container -->
+
+    <!-- Settings Dialog -->
+    <dialog id="settingsDialog">
+        <h2><i class="fas fa-cog"></i> Configurações Avançadas</h2>
+        <div class="dialog-content">
+             <label for="bookApiUrl">API Tarefas Livros:</label>
+             <input type="text" id="bookApiUrl" value="http://localhost:8000">
+             <!-- Add more advanced settings here in the future -->
+        </div>
+        <div class="dialog-actions">
+             <button id="closeSettingsBtn">Fechar</button>
+        </div>
+    </dialog>
+
+    <!-- Include the JavaScript file -->
+    <script src="script.js"></script>
+</body>
+</html>
